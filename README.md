@@ -35,4 +35,4 @@ ModuleAVMix is recommended in place of [ModuleAddAudioTrack](https://www.wowza.c
 
 ## License
 
-This code is distributed under the [Wowza Public License](https://github.com/WowzaMediaSystems/[jar-file-name]/blob/master/LICENSE.txt).
+This code is distributed under the [Wowza Public License](https://github.com/WowzaMediaSystems/wse-plugin-avmix/blob/master/LICENSE.txt).
