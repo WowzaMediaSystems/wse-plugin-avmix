@@ -1,6 +1,6 @@
-# ModuleAVMix
+# AVMix
 
-ModuleAVMix is a module for [Wowza Streaming Engine™ media server software](https://www.wowza.com/products/streaming-engine) that allows combining separate audio and video sources into a single stream.
+AVMix is a module for [Wowza Streaming Engine™ media server software](https://www.wowza.com/products/streaming-engine) that allows combining separate audio and video sources into a single stream.
 
 ## Prerequisites
 
