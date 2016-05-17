@@ -19,7 +19,7 @@ This module provides the following functionality:
 * If source timecodes are synchronized, then the output stream can be set to synchronize; otherwise, the timecodes offset to a common base.
 * The output stream can be delayed to compensate for data surges in either source. This is ideal if the audio is a shoutcast source that includes a burst when it starts.
 
-## API Reference
+## More resources
 
 [Wowza Streaming Engine Server-Side API Reference](https://www.wowza.com/resources/WowzaStreamingEngine_ServerSideAPI.pdf)
 
