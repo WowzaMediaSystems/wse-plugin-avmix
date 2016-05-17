@@ -8,6 +8,8 @@ Wowza Streaming Engine 4.0.0 or later is required.
 
 ## Usage
 
+When the application is started, the **avMixNames** property values are used to configure each output stream. Starting one either the audio or video source triggers the output stream to start. The stream will continue to run as long as one of the sources is running and the stream will stop automatically. If **sortDelay** is set, then the output startup, playback, and shutdown will be delayed by this amount of time.
+
 This module provides the following functionality:
 
 * Configuration allows multiple streams to be configured separately.
@@ -15,7 +17,7 @@ This module provides the following functionality:
 * If one of the sources goes offline, the other source will continue. When both sources go offline, the output stream will shut down.
 * Streams can be updated dynamically by using API methods.
 * If source timecodes are synchronized, then the output stream can be set to synchronize; otherwise, the timecodes offset to a common base.
-* Output stream can be delayed to allow for data surges in either source. This is ideal if the audio is a shoutcast source that includes a burst when it starts.
+* The output stream can be delayed to compensate for data surges in either source. This is ideal if the audio is a shoutcast source that includes a burst when it starts.
 
 ## API Reference
 
