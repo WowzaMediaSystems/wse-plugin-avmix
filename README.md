@@ -8,7 +8,7 @@ Wowza Streaming Engine 4.0.0 or later is required.
 
 ## Usage
 
-When the application is started, the **avMixNames** property values are used to configure each output stream. Starting one either the audio or video source triggers the output stream to start. The stream will continue to run as long as one of the sources is running and the stream will stop automatically. If **sortDelay** is set, then the output startup, playback, and shutdown will be delayed by this amount of time.
+When the application is started, the **avMixNames** property values are used to configure the output stream. Starting either the audio or video source triggers the output stream to start. The stream will continue to run as long as one of the sources is running and the stream will stop automatically when both sources are stopped. If **sortDelay** is set, then the output startup, playback, and shutdown will be delayed by this amount of time.
 
 This module provides the following functionality:
 
