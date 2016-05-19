@@ -1,4 +1,4 @@
-# ModuleAVMix
+# AVMix
 The **ModuleAVMix** module for [Wowza Streaming Engine™ media server software](https://www.wowza.com/products/streaming-engine) enables you to combine separate audio and video sources into a single stream.
 
 ## Prerequisites
@@ -23,7 +23,7 @@ This module provides the following functionality:
 
 Wowza Media Systems™ provides developers with a platform to create streaming applications and solutions. See [Wowza Developer Tools](https://www.wowza.com/resources/developers) to learn more about our APIs and SDK.
 
-To use the compiled version of this module, see [How to mix audio and video from different live sources (ModuleAVMix)](https://www.wowza.com/forums/content.php?653-How-to-mix-audio-and-video-from-different-live-sources-%28ModuleAVMix%29).
+To use the compiled version of this module, see [How to mix audio and video from different live sources (AVMix)](https://www.wowza.com/forums/content.php?653-How-to-mix-audio-and-video-from-different-live-sources-%28ModuleAVMix%29).
 
 We recommend that you use **ModuleAVMix** in place of [ModuleAddAudioTrack](https://www.wowza.com/forums/content.php?590-How-to-add-an-audio-track-to-a-video-only-stream-%28ModuleAddAudioTrack%29) because it provides additional functionality.
 
