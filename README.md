@@ -32,3 +32,5 @@ We recommend that you use **ModuleAVMix** in place of [ModuleAddAudioTrack](http
 
 ## License
 This code is distributed under the [Wowza Public License](https://github.com/WowzaMediaSystems/wse-plugin-avmix/blob/master/LICENSE.txt).
+
+![alt tag](http://wowzalogs.com/stats/githubimage.php?plugin=wse-plugin-avmix)
