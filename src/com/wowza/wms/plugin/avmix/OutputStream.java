@@ -309,22 +309,17 @@ public class OutputStream extends Thread
 			}
 
 			long newTimecode = useOriginalTimecodes ? packet.getAbsTimecode() : videoOffset + packet.getAbsTimecode();
-			AMFPacket newPacket = new AMFPacket(type, 0, packet.getData());
-			newPacket.setAbsTimecode(newTimecode);
-			packets.add(newPacket);
-			if (debugLog)
-				logger.info(CLASS_NAME + ".processVideoSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add video packet. " + packet + " : " + newPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
 
 			if (isFirstVideo && type == IVHost.CONTENTTYPE_VIDEO)
 			{
 				AMFPacket configPacket = videoSource.getVideoCodecConfigPacket(packet.getAbsTimecode());
 				if (configPacket != null)
 				{
-					newPacket = new AMFPacket(IVHost.CONTENTTYPE_VIDEO, 0, configPacket.getData());
-					newPacket.setAbsTimecode(newTimecode);
-					packets.add(newPacket);
+					AMFPacket newConfigPacket = new AMFPacket(IVHost.CONTENTTYPE_VIDEO, 0, configPacket.getData());
+					newConfigPacket.setAbsTimecode(newTimecode);
+					packets.add(newConfigPacket);
 					if (debugLog)
-						logger.info(CLASS_NAME + ".processVideoSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add video config packet. " + configPacket + " : " + newPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
+						logger.info(CLASS_NAME + ".processVideoSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add video config packet. " + configPacket + " : " + newConfigPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
 				}
 
 				if (addVideoData)
@@ -352,11 +347,11 @@ public class OutputStream extends Thread
 							if (metaPacket.getData() == null)
 								continue;
 
-							newPacket = new AMFPacket(IVHost.CONTENTTYPE_DATA, 0, metaPacket.getData());
-							newPacket.setAbsTimecode(newTimecode);
-							packets.add(newPacket);
+							AMFPacket newMetaPacket = new AMFPacket(IVHost.CONTENTTYPE_DATA, 0, metaPacket.getData());
+							newMetaPacket.setAbsTimecode(newTimecode);
+							packets.add(newMetaPacket);
 							if (debugLog)
-								logger.info(CLASS_NAME + ".processVideoSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add video metadata packet. " + metaPacket + " : " + newPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
+								logger.info(CLASS_NAME + ".processVideoSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add video metadata packet. " + metaPacket + " : " + newMetaPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
 						}
 						break;
 					}
@@ -364,6 +359,13 @@ public class OutputStream extends Thread
 				}
 				isFirstVideo = false;
 			}
+			
+			AMFPacket newPacket = new AMFPacket(type, 0, packet.getData());
+			newPacket.setAbsTimecode(newTimecode);
+			packets.add(newPacket);
+			if (debugLog)
+				logger.info(CLASS_NAME + ".processVideoSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add video packet. " + packet + " : " + newPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
+
 			videoSeq = packet.getSeq();
 			lastProcessedVideoTC = newTimecode;
 		}
@@ -497,22 +499,17 @@ public class OutputStream extends Thread
 			}
 
 			long newTimecode = useOriginalTimecodes ? packet.getAbsTimecode() : audioOffset + packet.getAbsTimecode();
-			AMFPacket newPacket = new AMFPacket(type, 0, packet.getData());
-			newPacket.setAbsTimecode(newTimecode);
-			packets.add(newPacket);
-			if (debugLog)
-				logger.info(CLASS_NAME + ".processAudioSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add audio packet. " + packet + " : " + newPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
 
 			if (isFirstAudio && type == IVHost.CONTENTTYPE_AUDIO)
 			{
 				AMFPacket configPacket = audioSource.getAudioCodecConfigPacket(packet.getAbsTimecode());
 				if (configPacket != null)
 				{
-					newPacket = new AMFPacket(IVHost.CONTENTTYPE_AUDIO, 0, configPacket.getData());
-					newPacket.setAbsTimecode(newTimecode);
-					packets.add(newPacket);
+					AMFPacket newConfigPacket = new AMFPacket(IVHost.CONTENTTYPE_AUDIO, 0, configPacket.getData());
+					newConfigPacket.setAbsTimecode(newTimecode);
+					packets.add(newConfigPacket);
 					if (debugLog)
-						logger.info(CLASS_NAME + ".processAudioSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add audio config packet. " + configPacket + " : " + newPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
+						logger.info(CLASS_NAME + ".processAudioSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add audio config packet. " + configPacket + " : " + newConfigPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
 				}
 
 				if (addAudioData)
@@ -540,11 +537,11 @@ public class OutputStream extends Thread
 							if (metaPacket.getData() == null)
 								continue;
 
-							newPacket = new AMFPacket(IVHost.CONTENTTYPE_DATA, 0, metaPacket.getData());
-							newPacket.setAbsTimecode(newTimecode);
-							packets.add(newPacket);
+							AMFPacket newMetaPacket = new AMFPacket(IVHost.CONTENTTYPE_DATA, 0, metaPacket.getData());
+							newMetaPacket.setAbsTimecode(newTimecode);
+							packets.add(newMetaPacket);
 							if (debugLog)
-								logger.info(CLASS_NAME + ".processAudioSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add audio metadata packet. " + metaPacket + " : " + newPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
+								logger.info(CLASS_NAME + ".processAudioSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add audio metadata packet. " + metaPacket + " : " + newMetaPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
 						}
 						break;
 					}
@@ -552,6 +549,13 @@ public class OutputStream extends Thread
 				}
 				isFirstAudio = false;
 			}
+			
+			AMFPacket newPacket = new AMFPacket(type, 0, packet.getData());
+			newPacket.setAbsTimecode(newTimecode);
+			packets.add(newPacket);
+			if (debugLog)
+				logger.info(CLASS_NAME + ".processAudioSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add audio packet. " + packet + " : " + newPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
+
 			audioSeq = packet.getSeq();
 			lastProcessedAudioTC = newTimecode;
 		}
