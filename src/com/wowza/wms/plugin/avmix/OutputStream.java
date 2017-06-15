@@ -643,6 +643,7 @@ public class OutputStream extends Thread
 		publisher = Publisher.createInstance(appInstance);
 		if (publisher != null)
 		{
+			publisher.setStreamType(appInstance.getStreamType());
 			publisher.publish(outputName);
 			stream = publisher.getStream();
 			stream.setMergeOnMetadata(appInstance.getProperties().getPropertyBoolean("avMixMergeMetadata", true));
