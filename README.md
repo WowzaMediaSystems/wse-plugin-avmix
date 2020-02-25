@@ -1,6 +1,8 @@
 # AVMix
 The **ModuleAVMix** module for [Wowza Streaming Engine™ media server software](https://www.wowza.com/products/streaming-engine) enables you to combine separate audio and video sources into a single stream.
 
+This repo includes a [compiled version](/lib/wse-plugin-avmix.jar).
+
 ## Prerequisites
 Wowza Streaming Engine 4.0.0 or later is required.
 
@@ -17,15 +19,15 @@ This module provides the following functionality:
 * The output stream can be delayed to compensate for data surges in either source. This is ideal if the audio is a SHOUTcast source that includes a burst when it starts.
 
 ## More resources
+To use the compiled version of this module, see [Mix audio and video from different live sources with a Wowza Streaming Engine Java module](https://www.wowza.com/docs/how-to-mix-audio-and-video-from-different-live-sources-moduleavmix).
+
+We recommend that you use **ModuleAVMix** in place of [ModuleAddAudioTrack](https://www.wowza.com/docs/how-to-add-an-audio-track-to-a-video-only-stream-moduleaddaudiotrack) because it provides additional functionality.
+
 [Wowza Streaming Engine Server-Side API Reference](https://www.wowza.com/resources/serverapi/)
 
-[How to extend Wowza Streaming Engine using the Wowza IDE](https://www.wowza.com/forums/content.php?759-How-to-extend-Wowza-Streaming-Engine-using-the-Wowza-IDE)
+[How to extend Wowza Streaming Engine using the Wowza IDE](https://www.wowza.com/docs/how-to-extend-wowza-streaming-engine-using-the-wowza-ide)
 
-Wowza Media Systems™ provides developers with a platform to create streaming applications and solutions. See [Wowza Developer Tools](https://www.wowza.com/resources/developers) to learn more about our APIs and SDK.
-
-To use the compiled version of this module, see [How to mix audio and video from different live sources (AVMix)](https://www.wowza.com/forums/content.php?653-How-to-mix-audio-and-video-from-different-live-sources-%28ModuleAVMix%29).
-
-We recommend that you use **ModuleAVMix** in place of [ModuleAddAudioTrack](https://www.wowza.com/forums/content.php?590-How-to-add-an-audio-track-to-a-video-only-stream-%28ModuleAddAudioTrack%29) because it provides additional functionality.
+Wowza Media Systems™ provides developers with a platform to create streaming applications and solutions. See [Wowza Developer Tools](https://www.wowza.com/developer) to learn more about our APIs and SDK.
 
 ## Contact
 [Wowza Media Systems, LLC](https://www.wowza.com/contact)
