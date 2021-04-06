@@ -1,5 +1,5 @@
 /*
- * This code and all components (c) Copyright 2006 - 2018, Wowza Media Systems, LLC. All rights reserved.
+ * This code and all components (c) Copyright 2006 - 2021, Wowza Media Systems, LLC.  All rights reserved.
  * This code is licensed pursuant to the Wowza Public License version 1.0, available at www.wowza.com/legal.
  */
 package com.wowza.wms.plugin.avmix;
@@ -72,6 +72,16 @@ public class AVMixer
 
 	public String addOrUpdateOutputStream(String outputName, String videoName, String audioName, long sortDelay, boolean useOriginalTimecodes)
 	{
+		return addOrUpdateOutputStream(outputName, videoName, audioName, sortDelay, useOriginalTimecodes, 0, false, 2, 48000);
+	}
+
+	public String addOrUpdateOutputStream(String outputName, String videoName, String audioName, long sortDelay, boolean useOriginalTimecodes, long avOffset)
+	{
+		return addOrUpdateOutputStream(outputName, videoName, audioName, sortDelay, useOriginalTimecodes, avOffset, false, 2, 48000);
+	}
+
+	public String addOrUpdateOutputStream(String outputName, String videoName, String audioName, long sortDelay, boolean useOriginalTimecodes, long avOffset, boolean padAudio, int padAudioChannels, int padAudioSampleRate)
+	{
 		if (StringUtils.isEmpty(outputName))
 			return "Output Name not set. ";
 
@@ -98,7 +108,11 @@ public class AVMixer
 			}
 			streamInfo.setVideoName(videoName);
 			streamInfo.setAudioName(audioName);
+			streamInfo.setAvOffset(avOffset);
 			streamInfo.setSortDelay(sortDelay);
+			streamInfo.setPadAudio(padAudio);
+			streamInfo.setPadAudioChannels(padAudioChannels);
+			streamInfo.setPadAudioSampleRate(padAudioSampleRate);
 			streamInfo.setUseOriginalTimeCodes(useOriginalTimecodes);
 		}
 		ret += "Video Source set to " + videoName + ". Audio Source set to " + audioName + ". ";
@@ -116,7 +130,7 @@ public class AVMixer
 		}
 		else
 		{
-			ret += startOutputStream(outputName, videoName, audioName, sortDelay, useOriginalTimecodes);
+			ret += startOutputStream(outputName, videoName, audioName, sortDelay, useOriginalTimecodes, avOffset, padAudio, padAudioChannels, padAudioSampleRate);
 		}
 		return ret;
 	}
@@ -156,12 +170,23 @@ public class AVMixer
 		}
 		else
 		{
-			ret += startOutputStream(outputName, videoName, streamInfo.getAudioName(), streamInfo.getSortDelay(), streamInfo.isUseOriginalTimeCodes());
+			ret += startOutputStream(outputName, videoName, streamInfo.getAudioName(), streamInfo.getSortDelay(), streamInfo.isUseOriginalTimeCodes(),
+					streamInfo.getAvOffset(), streamInfo.isPadAudio(), streamInfo.getPadAudioChannels(), streamInfo.getPadAudioSampleRate());
 		}
 		return ret;
 	}
 
 	public String setAudioSource(String outputName, String audioName)
+	{
+		return setAudioSource(outputName, audioName, 0, false, 2, 48000);
+	}
+
+	public String setAudioSource(String outputName, String audioName, long avOffset)
+	{
+		return setAudioSource(outputName, audioName, avOffset, false, 2, 48000);
+	}
+
+	public String setAudioSource(String outputName, String audioName, long avOffset, boolean padAudio, int padAudioChannels, int padAudioSampleRate)
 	{
 		if (StringUtils.isEmpty(outputName))
 			return "Output Name not set. ";
@@ -181,6 +206,10 @@ public class AVMixer
 				streamNames.put(outputName, streamInfo);
 			}
 			streamInfo.setAudioName(audioName);
+			streamInfo.setAvOffset(avOffset);
+			streamInfo.setPadAudio(padAudio);
+			streamInfo.setPadAudioChannels(padAudioChannels);
+			streamInfo.setPadAudioSampleRate(padAudioSampleRate);
 		}
 		ret = "Updating Output Stream Info: " + outputName + ". Audio Source set to " + audioName + ". ";
 
@@ -195,7 +224,7 @@ public class AVMixer
 		}
 		else
 		{
-			ret += startOutputStream(outputName, streamInfo.getVideoName(), audioName, streamInfo.getSortDelay(), streamInfo.isUseOriginalTimeCodes());
+			ret += startOutputStream(outputName, streamInfo.getVideoName(), audioName, streamInfo.getSortDelay(), streamInfo.isUseOriginalTimeCodes(), avOffset, padAudio, padAudioChannels, padAudioSampleRate);
 		}
 
 		return ret;
@@ -228,7 +257,7 @@ public class AVMixer
 				if (streamInfo.getVideoName().equals(streamName) || streamInfo.getAudioName().equals(streamName))
 				{
 					String ret = "";
-					ret = startOutputStream(streamInfo.getOutputName(), streamInfo.getVideoName(), streamInfo.getAudioName(), streamInfo.getSortDelay(), streamInfo.isUseOriginalTimeCodes());
+					ret = startOutputStream(streamInfo.getOutputName(), streamInfo.getVideoName(), streamInfo.getAudioName(), streamInfo.getSortDelay(), streamInfo.isUseOriginalTimeCodes(), streamInfo.getAvOffset(), streamInfo.isPadAudio(), streamInfo.getPadAudioChannels(), streamInfo.getPadAudioSampleRate());
 					logger.info(CLASS_NAME + ".addStream [" + ret + "]");
 				}
 			}
@@ -268,7 +297,8 @@ public class AVMixer
 		}
 	}
 
-	private String startOutputStream(String outputName, String videoName, String audioName, long sortDelay, boolean useOriginalTimecodes)
+	private String startOutputStream(String outputName, String videoName, String audioName, long sortDelay,
+			boolean useOriginalTimecodes, long avOffset, boolean padAudio, int padAudioChannels, int padAudioSampleRate)
 	{
 		String ret = "";
 		OutputStream outputStream = null;
@@ -280,6 +310,7 @@ public class AVMixer
 		{
 			outputStream.setVideoName(videoName);
 			outputStream.setAudioName(audioName);
+			outputStream.setAVOffset(avOffset);
 			ret = "Output Stream Updated: [" + appInstance.getContextStr() + "/" + outputName + " Video Source: " + videoName + ", Audio Source: " + audioName + "]. ";
 		}
 		else
@@ -289,6 +320,10 @@ public class AVMixer
 				outputStream = new OutputStream(appInstance, outputName, System.currentTimeMillis(), sortDelay, useOriginalTimecodes);
 				outputStream.setVideoName(videoName);
 				outputStream.setAudioName(audioName);
+				outputStream.setAVOffset(avOffset);
+				outputStream.setPadAudio(padAudio);
+				outputStream.setPadAudioChannelCount(padAudioChannels);
+				outputStream.setPadAudioSampleRate(padAudioSampleRate);
 				outputStream.setName("AVMixOutputStream: [" + appInstance.getContextStr() + "/" + outputName + "]");
 				outputStream.setDaemon(true);
 				outputStream.start();

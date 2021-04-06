@@ -1,5 +1,5 @@
 /*
- * This code and all components (c) Copyright 2006 - 2018, Wowza Media Systems, LLC. All rights reserved.
+ * This code and all components (c) Copyright 2006 - 2021, Wowza Media Systems, LLC.  All rights reserved.
  * This code is licensed pursuant to the Wowza Public License version 1.0, available at www.wowza.com/legal.
  */
 package com.wowza.wms.plugin.avmix;
@@ -10,6 +10,10 @@ public class StreamInfo
 	private String videoName;
 	private String audioName;
 	private long sortDelay = 10000l;
+	private long avOffset = 0l;
+	private boolean padAudio = false;
+	private int padAudioChannels = 2;
+	private int padAudioSampleRate = 48000;
 	private boolean useOriginalTimeCodes = false;
 
 	public String getOutputName()
@@ -60,5 +64,45 @@ public class StreamInfo
 	public void setUseOriginalTimeCodes(boolean useOriginalTimeCodes)
 	{
 		this.useOriginalTimeCodes = useOriginalTimeCodes;
+	}
+
+	public long getAvOffset()
+	{
+		return avOffset;
+	}
+
+	public void setAvOffset(long avOffset)
+	{
+		this.avOffset = avOffset;
+	}
+
+	public boolean isPadAudio()
+	{
+		return padAudio;
+	}
+
+	public void setPadAudio(boolean padAudio)
+	{
+		this.padAudio = padAudio;
+	}
+
+	public int getPadAudioChannels()
+	{
+		return padAudioChannels;
+	}
+
+	public void setPadAudioChannels(int padAudioChannels)
+	{
+		this.padAudioChannels = padAudioChannels;
+	}
+
+	public int getPadAudioSampleRate()
+	{
+		return padAudioSampleRate;
+	}
+
+	public void setPadAudioSampleRate(int padAudioSampleRate)
+	{
+		this.padAudioSampleRate = padAudioSampleRate;
 	}
 }

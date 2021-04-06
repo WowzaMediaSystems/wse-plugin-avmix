@@ -1,5 +1,5 @@
 /*
- * This code and all components (c) Copyright 2006 - 2018, Wowza Media Systems, LLC. All rights reserved.
+ * This code and all components (c) Copyright 2006 - 2021, Wowza Media Systems, LLC.  All rights reserved.
  * This code is licensed pursuant to the Wowza Public License version 1.0, available at www.wowza.com/legal.
  */
 package com.wowza.wms.plugin.avmix;
@@ -17,6 +17,8 @@ import com.wowza.wms.application.IApplicationInstance;
 import com.wowza.wms.logging.WMSLogger;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.logging.WMSLoggerIDs;
+import com.wowza.wms.media.aac.AACFrame;
+import com.wowza.wms.media.aac.AACUtils;
 import com.wowza.wms.stream.IMediaStream;
 import com.wowza.wms.stream.IMediaStreamMetaDataProvider;
 import com.wowza.wms.stream.publish.Publisher;
@@ -37,6 +39,9 @@ public class OutputStream extends Thread
 	}
 
 	public static final String CLASS_NAME = "OutputStream";
+	public static final byte[] SILENT_MONO_PACKET = {(byte)0xaf, (byte)0x01, (byte)0x01, (byte)0x18, (byte)0x20, (byte)0x07};
+	public static final byte[] SILENT_STEREO_PACKET = {(byte)0xaf, (byte)0x01, (byte)0x21, (byte)0x10, (byte)0x04, (byte)0x60, (byte)0x8c, (byte)0x1c};
+	public static final byte[] SILENT_5_1_PACKET = {(byte)0xaf, (byte)0x01, (byte)0x01, (byte)0x18, (byte)0x20, (byte)0x01, (byte)0x08, (byte)0x80, (byte)0x23, (byte)0x04, (byte)0x60, (byte)0x23, (byte)0x10, (byte)0x04, (byte)0x60, (byte)0x8c, (byte)0x0c, (byte)0x23, (byte)0x00, (byte)0x00, (byte)0xe0};
 
 	private IApplicationInstance appInstance;
 	private WMSLogger logger;
@@ -58,10 +63,16 @@ public class OutputStream extends Thread
 	private long audioSeq = -1;
 	private long videoSeq = -1;
 	private long lastTC = -1;
+	private long firstProcessedAudioTC = -1;
+	private long firstProcessedVideoTC = -1;
 	private long lastProcessedAudioTC = -1;
 	private long lastProcessedVideoTC = -1;
 	private long videoSwitchTimecode = -1;
 	private long audioSwitchTimecode = -1;
+	private long avOffset = 0;
+
+	private int padAudioSampleRate = 48000;
+	private int padAudioChannelCount = 2;
 
 	private boolean useOriginalTimecodes = false;
 	private boolean addAudioData = true;
@@ -72,6 +83,7 @@ public class OutputStream extends Thread
 	private boolean foundFirstVideo = false;
 	private boolean waitForKeyframe = true;
 	private boolean pendingVideoSwitch = false;
+	private boolean padAudio = true; //false;
 
 	private boolean pendingAudioSwitch = false;
 	private boolean debugLog = false;
@@ -359,7 +371,7 @@ public class OutputStream extends Thread
 				}
 				isFirstVideo = false;
 			}
-			
+
 			AMFPacket newPacket = new AMFPacket(type, 0, packet.getData());
 			newPacket.setAbsTimecode(newTimecode);
 			packets.add(newPacket);
@@ -367,6 +379,8 @@ public class OutputStream extends Thread
 				logger.info(CLASS_NAME + ".processVideoSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add video packet. " + packet + " : " + newPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
 
 			videoSeq = packet.getSeq();
+			if(firstProcessedVideoTC == -1)
+				firstProcessedVideoTC = newTimecode;
 			lastProcessedVideoTC = newTimecode;
 		}
 
@@ -380,9 +394,13 @@ public class OutputStream extends Thread
 		IMediaStream stream = appInstance.getStreams().getStream(audioName);
 		if (stream == null)
 		{
+			if(audioSource != null && !useOriginalTimecodes)
+				isFirstAudio = true;
 			audioSource = null;
 			if (debugLog)
 				logger.info(CLASS_NAME + ".processAudioSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " audio source not running]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
+			if(padAudio && !useOriginalTimecodes)
+				insertSilentAudio(lastProcessedVideoTC + avOffset);
 			return;
 		}
 
@@ -459,9 +477,13 @@ public class OutputStream extends Thread
 					if (delayOffset == -1)
 						delayOffset = System.currentTimeMillis() - packet.getAbsTimecode();
 				}
+				else if(padAudio && lastProcessedAudioTC >= 0)
+				{
+					audioOffset = (lastProcessedAudioTC + packet.getTimecode()) - packet.getAbsTimecode();
+				}
 				else
 				{
-					audioOffset = System.currentTimeMillis() - packet.getAbsTimecode();
+					audioOffset = System.currentTimeMillis() - (packet.getAbsTimecode() + avOffset);
 
 					if (audioOffset + packet.getAbsTimecode() <= lastProcessedAudioTC)
 					{
@@ -549,7 +571,7 @@ public class OutputStream extends Thread
 				}
 				isFirstAudio = false;
 			}
-			
+
 			AMFPacket newPacket = new AMFPacket(type, 0, packet.getData());
 			newPacket.setAbsTimecode(newTimecode);
 			packets.add(newPacket);
@@ -557,7 +579,102 @@ public class OutputStream extends Thread
 				logger.info(CLASS_NAME + ".processAudioSource(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add audio packet. " + packet + " : " + newPacket + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
 
 			audioSeq = packet.getSeq();
+			if(firstProcessedAudioTC == -1)
+				firstProcessedAudioTC = newTimecode;
 			lastProcessedAudioTC = newTimecode;
+		}
+	}
+
+	private void insertSilentAudio(long latestTimecode)
+	{
+		// don't pad audio if stream hasn't started yet.
+		if(lastProcessedVideoTC == -1)
+			return;
+
+		if(latestTimecode <= lastProcessedAudioTC)
+			return;
+
+		AACFrame frame = null;
+		IMediaStream outStream = appInstance.getStreams().getStream(outputName);
+		if(outStream != null)
+		{
+			AMFPacket latestAudioConfigPacket = outStream.getAudioCodecConfigPacket(outStream.getAudioTC());
+			if(latestAudioConfigPacket != null)
+			{
+				frame = AACUtils.decodeAACCodecConfig(latestAudioConfigPacket.getData(), 2);
+			}
+		}
+
+		if(frame == null)
+		{
+			frame = new AACFrame();
+			frame.setSampleRate(padAudioSampleRate);
+			frame.setRateIndex(AACUtils.sampleRateToIndex(padAudioSampleRate));
+			frame.setChannels(padAudioChannelCount);
+			frame.setChannelIndex(AACUtils.channelCountToIndex(padAudioChannelCount));
+		}
+
+		double frameDuration = 1000 / ((double)frame.getSampleRate() / (double)frame.getSampleCount());
+
+		double insertTC = firstProcessedVideoTC;
+		if(lastProcessedAudioTC >= 0)
+			insertTC = lastProcessedAudioTC + frameDuration;
+
+		if(insertTC >= latestTimecode)
+			return;
+
+		byte[] data = null;
+		switch (frame.getChannels())
+		{
+		case 1:
+			data = SILENT_MONO_PACKET;
+			break;
+
+		case 2:
+			data = SILENT_STEREO_PACKET;
+			break;
+
+		case 6:
+			data = SILENT_5_1_PACKET;
+			break;
+
+		default :
+			if (debugLog)
+				logger.warn(CLASS_NAME + ".insertSilentAudio(): " + "[" + appInstance.getContextStr() + "/" + outputName + "] can't create packets: " + frame, WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
+		}
+
+		if(data == null)
+			return;
+
+		long newTimecode = (long)insertTC;
+		if(isFirstAudio)
+		{
+			byte[] codecConfig = new byte[4];
+			codecConfig[0] = (byte) 0xaf;
+			codecConfig[1] = (byte) 0x00;
+
+			AACUtils.encodeAACCodecConfig(frame, codecConfig, 2);
+			AMFPacket configPacket = new AMFPacket(IVHost.CONTENTTYPE_AUDIO, 0, codecConfig);
+			configPacket.setAbsTimecode(newTimecode);
+			if (debugLog)
+				logger.info(CLASS_NAME + ".insertSilentAudio(): " + "[" + appInstance.getContextStr() + "/" + outputName + "] insert silent audio config packet: " + frame + ", timecode: " + newTimecode, WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
+			packets.add(configPacket);
+			isFirstAudio = false;
+		}
+
+		while(insertTC < latestTimecode)
+		{
+			newTimecode = (long)insertTC;
+			AMFPacket packet = new AMFPacket(IVHost.CONTENTTYPE_AUDIO, 0, data);
+			packet.setAbsTimecode(newTimecode);
+			packets.add(packet);
+			if (debugLog)
+				logger.info(CLASS_NAME + ".insertSilentAudio(): " + "[" + appInstance.getContextStr() + "/" + outputName + " add silent audio packet. " + packet + "]", WMSLoggerIDs.CAT_application, WMSLoggerIDs.EVT_comment);
+
+			if(firstProcessedAudioTC == -1)
+				firstProcessedAudioTC = newTimecode;
+			lastProcessedAudioTC = newTimecode;
+			insertTC += frameDuration;
 		}
 	}
 
@@ -643,7 +760,6 @@ public class OutputStream extends Thread
 		publisher = Publisher.createInstance(appInstance);
 		if (publisher != null)
 		{
-			publisher.setStreamType(appInstance.getStreamType());
 			publisher.publish(outputName);
 			stream = publisher.getStream();
 			stream.setMergeOnMetadata(appInstance.getProperties().getPropertyBoolean("avMixMergeMetadata", true));
@@ -770,5 +886,43 @@ public class OutputStream extends Thread
 		{
 			return running;
 		}
+	}
+
+	public void setAVOffset(long avOffset)
+	{
+		synchronized(this)
+		{
+		this.avOffset = avOffset;
+		}
+	}
+
+	public boolean isPadAudio()
+	{
+		return padAudio;
+	}
+
+	public void setPadAudio(boolean padAudio)
+	{
+		this.padAudio = padAudio;
+	}
+
+	public int getPadAudioSampleRate()
+	{
+		return padAudioSampleRate;
+	}
+
+	public void setPadAudioSampleRate(int padAudioSampleRate)
+	{
+		this.padAudioSampleRate = padAudioSampleRate;
+	}
+
+	public int getPadAudioChannelCount()
+	{
+		return padAudioChannelCount;
+	}
+
+	public void setPadAudioChannelCount(int padAudioChannelCount)
+	{
+		this.padAudioChannelCount = padAudioChannelCount;
 	}
 }
