@@ -1,5 +1,5 @@
 /*
- * This code and all components (c) Copyright 2006 - 2018, Wowza Media Systems, LLC. All rights reserved.
+ * This code and all components (c) Copyright 2006 - 2026, Wowza Media Systems, LLC. All rights reserved.
  * This code is licensed pursuant to the Wowza Public License version 1.0, available at www.wowza.com/legal.
  */
 package com.wowza.wms.plugin.avmix;
@@ -62,7 +62,10 @@ public class ModuleAVMix extends ModuleBase
 		}
 	}
 
-	public static final String MODULE_NAME = "ModuleAVMix";
+	private static final Class<ModuleAVMix> CLASS = ModuleAVMix.class;
+
+	public static final String MODULE_NAME = CLASS.getSimpleName();
+	public static final String MODULE_VERSION = ReleaseInfo.getVersion();
 
 	private WMSLogger logger;
 	private boolean debugLog = false;
@@ -74,6 +77,7 @@ public class ModuleAVMix extends ModuleBase
 	public void onAppStart(IApplicationInstance appInstance)
 	{
 		logger = WMSLoggerFactory.getLoggerObj(appInstance);
+		logger.info(MODULE_NAME + ".onAppStart: [" + appInstance.getContextStr() + "] " + ReleaseInfo.getProject() + " version: " + MODULE_VERSION + " build: " + ReleaseInfo.getBuildNumber());
 		this.appInstance = appInstance;
 		debugLog = appInstance.getProperties().getPropertyBoolean("avMixDebugLog", debugLog);
 		if (logger.isDebugEnabled())

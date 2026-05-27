@@ -12,11 +12,17 @@ When the application is started, the **avMixNames** property values are used to 
 This module provides the following functionality:
 
 * Configuration allows multiple streams to be configured separately.
-* Any compatible live sources can be used for either video or audio. This feature isn't limited to a single audio source generated from a file.
-* If one of the sources goes offline, the other source will continue. When both sources go offline, the output stream will shut down.
+* Any compatible live or MP4 sources can be used for either video or audio. This feature isn't limited to a single audio source generated from a file.
+* When using MP4 sources, a Stream is published using the MP4 source as a looping live stream.
+* If one of the live sources goes offline, the other source will continue. When both sources go offline, the output stream will shut down.
 * Streams can be updated dynamically by using API methods.
 * If source timecodes are synchronized, then the output stream can be set to synchronize; otherwise, the timecodes offset to a common base.
 * The output stream can be delayed to compensate for data surges in either source. This is ideal if the audio is a SHOUTcast source that includes a burst when it starts.
+
+## Build instructions
+* Clone repo to local filesystem.
+* Update `wseLibDir` variable in the `gradle.properties` file to point to local _Wowza Streaming Engine_ `lib` folder (`[install-dir]/lib`).
+* Run `./gradlew build` to build the jar file.
 
 ## More resources
 To use the compiled version of this module, see [Mix audio and video from different live sources with a Wowza Streaming Engine Java module](https://www.wowza.com/docs/how-to-mix-audio-and-video-from-different-live-sources-moduleavmix).

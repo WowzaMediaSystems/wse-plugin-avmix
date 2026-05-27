@@ -1,5 +1,5 @@
 /*
- * This code and all components (c) Copyright 2006 - 2018, Wowza Media Systems, LLC. All rights reserved.
+ * This code and all components (c) Copyright 2006 - 2026, Wowza Media Systems, LLC. All rights reserved.
  * This code is licensed pursuant to the Wowza Public License version 1.0, available at www.wowza.com/legal.
  */
 package com.wowza.wms.plugin.avmix;
@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Optional;
 
 import com.wowza.util.StringUtils;
 import com.wowza.wms.application.IApplicationInstance;
@@ -28,11 +29,27 @@ public class AVMixer
 
 	private Map<String, OutputStream> outputStreams = new HashMap<String, OutputStream>();
 	private Map<String, StreamInfo> streamNames = new HashMap<String, StreamInfo>();
+	private LoopingFileSource videoFileSource = null;
+	private LoopingFileSource audioFileSource = null;
 	private Timer pendingShutdownChecker = null;
 
 	private Object lock = new Object();
 
 	private boolean debugLog = false;
+
+	// Returns true if the source name refers to an mp4 file rather than a live stream.
+	private static boolean isFileSource(String name)
+	{
+		return name != null && name.toLowerCase().endsWith(LoopingFileSource.FILE_EXTENSION);
+	}
+
+	private LoopingFileSource startLoopingFileSource(String fileName)
+	{
+		// check if it is a file source and if the stream is not already published before starting the LoopingFileSource. If the stream is already published, the AVMixer will attempt to publish the stream again which will cause an error in the logs.
+		if (!isFileSource(fileName))
+			return null;
+		return new LoopingFileSource(appInstance, fileName);
+	}
 
 	public AVMixer(IApplicationInstance appInstance)
 	{
@@ -203,7 +220,6 @@ public class AVMixer
 
 	public String removeOutputStream(String outputName)
 	{
-
 		if (StringUtils.isEmpty(outputName))
 			return "Output Name not set";
 
@@ -221,6 +237,9 @@ public class AVMixer
 
 	public void addStream(String streamName)
 	{
+		if (isFileSource(streamName))
+			return;
+
 		synchronized(lock)
 		{
 			for (StreamInfo streamInfo : streamNames.values())
@@ -243,6 +262,7 @@ public class AVMixer
 			{
 				if (streamInfo.getVideoName().equals(streamName))
 				{
+					Optional.ofNullable(videoFileSource).ifPresent(LoopingFileSource::close);
 					OutputStream outputStream = outputStreams.get(streamInfo.getOutputName());
 					if (outputStream != null)
 					{
@@ -252,6 +272,7 @@ public class AVMixer
 				}
 				if (streamInfo.getAudioName().equals(streamName))
 				{
+					Optional.ofNullable(audioFileSource).ifPresent(LoopingFileSource::close);
 					OutputStream outputStream = outputStreams.get(streamInfo.getOutputName());
 					if (outputStream != null)
 					{
@@ -286,9 +307,13 @@ public class AVMixer
 		{
 			synchronized(lock)
 			{
+				// Initialize file sources if valid, otherwise return null
+				videoFileSource = Optional.ofNullable(videoFileSource).orElseGet(() -> startLoopingFileSource(videoName));
+				audioFileSource = Optional.ofNullable(audioFileSource).orElseGet(() -> startLoopingFileSource(audioName));
+				// Initialize output stream
 				outputStream = new OutputStream(appInstance, outputName, System.currentTimeMillis(), sortDelay, useOriginalTimecodes);
-				outputStream.setVideoName(videoName);
-				outputStream.setAudioName(audioName);
+				outputStream.setVideoName(Optional.ofNullable(videoFileSource).map(LoopingFileSource::getStreamName).orElse(videoName));
+				outputStream.setAudioName(Optional.ofNullable(audioFileSource).map(LoopingFileSource::getStreamName).orElse(audioName));
 				outputStream.setName("AVMixOutputStream: [" + appInstance.getContextStr() + "/" + outputName + "]");
 				outputStream.setDaemon(true);
 				outputStream.start();
@@ -314,6 +339,8 @@ public class AVMixer
 		{
 			if (shuttingDown)
 			{
+				Optional.ofNullable(videoFileSource).ifPresent(LoopingFileSource::close);
+				Optional.ofNullable(audioFileSource).ifPresent(LoopingFileSource::close);
 				outputStream.close();
 			}
 			else
