@@ -50,7 +50,7 @@ generateGitProperties.outputs.upToDateWhen { false }
 sourceSets {
     main {
         java {
-            srcDirs = ['src']
+            srcDirs = ['src', layout.buildDirectory.dir('generated/java')]
         }
     }
 }
@@ -58,7 +58,7 @@ sourceSets {
 tasks.register('generateReleaseInfo') {
     dependsOn generateGitProperties
     group = "build"
-    def outputDir = layout.buildDirectory.dir('generated/java')
+    def outputDir = layout.buildDirectory.dir('generated/java') as Provider<Directory>
     def packageDotPath = "${project.group}"
     def packagePath = packageDotPath.replaceAll('\\.', '/')
     def projectVersion = "${project.version}"
@@ -79,7 +79,6 @@ tasks.register('generateReleaseInfo') {
     }
 }
 
-sourceSets.main.java.srcDir generateReleaseInfo
 clean.finalizedBy generateReleaseInfo
 compileJava.dependsOn generateReleaseInfo
 

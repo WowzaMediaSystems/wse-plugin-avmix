@@ -62,7 +62,10 @@ public class ModuleAVMix extends ModuleBase
 		}
 	}
 
-	public static final String MODULE_NAME = "ModuleAVMix";
+	private static final Class<ModuleAVMix> CLASS = ModuleAVMix.class;
+
+	public static final String MODULE_NAME = CLASS.getSimpleName();
+	public static final String MODULE_VERSION = ReleaseInfo.getVersion();
 
 	private WMSLogger logger;
 	private boolean debugLog = false;
@@ -74,6 +77,7 @@ public class ModuleAVMix extends ModuleBase
 	public void onAppStart(IApplicationInstance appInstance)
 	{
 		logger = WMSLoggerFactory.getLoggerObj(appInstance);
+		logger.info(MODULE_NAME + ".onAppStart: [" + appInstance.getContextStr() + "] " + ReleaseInfo.getProject() + " version: " + MODULE_VERSION + " build: " + ReleaseInfo.getBuildNumber());
 		this.appInstance = appInstance;
 		debugLog = appInstance.getProperties().getPropertyBoolean("avMixDebugLog", debugLog);
 		if (logger.isDebugEnabled())
